@@ -80,7 +80,7 @@ function TeleportNetworkOwnerPart(part, position)
 		bp.D = 1000
 		bp.Position = position
 		bp.Parent = part
-		task.delay(2, function() if bp and bp.Parent then bp:Destroy() end end)
+		task.delay(0.05, function() if bp and bp.Parent then bp:Destroy() end end)
 	end
 end
 function CreateFeConnection()
