@@ -1,5 +1,9 @@
-local function serialize(value)
-	if typeof(value) == "string" then
+
+
+
+local mdin = {}
+function mdin.index(value)
+		if typeof(value) == "string" then
 		return escapeString(value)
 	elseif typeof(value) == "number" or typeof(value) == "boolean" then
 		return tostring(value)
@@ -16,6 +20,3 @@ local function serialize(value)
 	end
 end
 
-
-
-getgenv().serialize = serialize
