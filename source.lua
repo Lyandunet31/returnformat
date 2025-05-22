@@ -81,6 +81,8 @@ function TeleportNetworkOwnerPart(part, position)
 		bp.Position = position
 		bp.Parent = part
 		task.delay(0.01, function() if bp and bp.Parent then bp:Destroy() end end)
+		warn("Teleported Instance To 00000.1")
+		warn("Set Network owner")
 	end
 end
 function CreateFeConnection()
