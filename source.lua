@@ -85,3 +85,4 @@ function TeleportNetworkOwnerPart(part, position)
 end
 getgenv().returntable = returntable
 getgenv().TeleportNetworkOwnerPart = TeleportNetworkOwnerPart
+getgenv().IsRoUtils = true
