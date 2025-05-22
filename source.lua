@@ -71,5 +71,17 @@ function returnfunction(func)
 
 	return "-- Unable to retrieve function code"
 end
-
+function TeleportNetworkOwnerPart(part, position)
+	if part and part:IsA("BasePart") and not part.Anchored then
+		pcall(function() part:SetNetworkOwner(game:GetService("Players").LocalPlayer) end)
+		local bp = Instance.new("BodyPosition")
+		bp.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+		bp.P = 20000
+		bp.D = 1000
+		bp.Position = position
+		bp.Parent = part
+		task.delay(2, function() if bp and bp.Parent then bp:Destroy() end end)
+	end
+end
 getgenv().returntable = returntable
+getgenv().TeleportNetworkOwnerPart = TeleportNetworkOwnerPart
