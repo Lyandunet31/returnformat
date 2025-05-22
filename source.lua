@@ -83,6 +83,20 @@ function TeleportNetworkOwnerPart(part, position)
 		task.delay(2, function() if bp and bp.Parent then bp:Destroy() end end)
 	end
 end
+local function CreateFeConnection()
+    local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
+    return {
+        MovePart = function(partName, rotation)
+            local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
+            if fakeModel and fakeModel:FindFirstChild(partName) then
+                fakeModel[partName].Rotation = rotation
+            end
+        end
+    }
+end
+
+
 getgenv().returntable = returntable
 getgenv().TeleportNetworkOwnerPart = TeleportNetworkOwnerPart
 getgenv().IsRoUtils = true
+getgenv().CreateFeConnection = CreateFeConnection
