@@ -83,7 +83,7 @@ function TeleportNetworkOwnerPart(part, position)
 		task.delay(2, function() if bp and bp.Parent then bp:Destroy() end end)
 	end
 end
-local function CreateFeConnection()
+function CreateFeConnection()
     local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
     return {
         MovePart = function(partName, rotation)
