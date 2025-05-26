@@ -87,68 +87,180 @@ function TeleportNetworkOwnerPart(part, position)
 end
 
 function CreateFeConnection()
-    local RunService = game:GetService("RunService")
-    local Players = game:GetService("Players")
-    local TweenService = game:GetService("TweenService")
-    local LocalPlayer = Players.LocalPlayer
+    local Players = game:GetService('Players')
+    local RunService = game:GetService('RunService')
+    local UIS = game:GetService('UserInputService')
+    local TweenService = game:GetService('TweenService')
+    local Player = Players.LocalPlayer
 
-    local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
+    local Motors = {
+        ['Left Hip'] = 0,
+        ['Neck'] = 0,
+        ['Left Shoulder'] = 0,
+        ['Right Hip'] = 0,
+        ['Right Shoulder'] = 0,
+    }
 
+    -- Create fake character
+    Player.Character.Archivable = true
+    local OAN = Player.Character:FindFirstChild("Animate") and Player.Character.Animate:Clone()
+    local OCF = Player.Character.PrimaryPart.CFrame
+    local FakeCharacter = game:GetObjects('rbxassetid://10117001961')[1]
+    FakeCharacter.Name = Player.Name .. '_Fake'
+    if OAN then OAN.Parent = FakeCharacter end
+
+    Player.Character:BreakJoints()
+    Player.Character = nil
+
+    -- Wait for new character to load
+    Player.CharacterAdded:Once(function(NewChar)
+        FakeCharacter:PivotTo(OCF)
+        FakeCharacter.Parent = workspace
+        Player.Character = nil
+        Player.Character = FakeCharacter
+        workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed
+        workspace.CurrentCamera.CameraSubject = FakeCharacter.PrimaryPart
+        local RealChar = NewChar
+        RealChar.Archivable = true
+
+        local t = 0
+        local Con1
+        Con1 = RunService.Heartbeat:Connect(function(dt)
+            t += dt
+            RealChar.Torso.CFrame = FakeCharacter.Torso.CFrame
+        end)
+
+        task.spawn(function()
+            for _, LS in ipairs(FakeCharacter:GetChildren()) do
+                if LS:IsA('LocalScript') then
+                    LS.Enabled = false
+                    task.wait(0.2)
+                    LS.Enabled = true
+                end
+            end
+            for _, Part in ipairs(FakeCharacter:GetDescendants()) do
+                if Part:IsA('BasePart') then
+                    Part.Transparency = 1
+                end
+            end
+            for _, Decal in ipairs(FakeCharacter:GetDescendants()) do
+                if Decal:IsA('Decal') then
+                    Decal.Transparency = 1
+                end
+            end
+        end)
+
+        RealChar:WaitForChild('Humanoid').StateChanged:Connect(function()
+            for _, Part in ipairs(RealChar:GetChildren()) do
+                if Part:IsA('BasePart') then
+                    Part.CanCollide = false
+                end
+            end
+        end)
+
+        RunService.Heartbeat:Connect(function()
+            if RealChar:FindFirstChild('Animate') then
+                RealChar.Animate:Destroy()
+            end
+            for _, v in ipairs(RealChar.Humanoid:GetPlayingAnimationTracks()) do
+                v:Stop()
+            end
+        end)
+
+        local UJ
+        UJ = UIS.InputBegan:Connect(function(Input, gp)
+            if Input.KeyCode == Enum.KeyCode.Space and not gp then
+                task.spawn(function()
+                    while UIS:IsKeyDown(Enum.KeyCode.Space) do
+                        FakeCharacter.Humanoid.Jump = true
+                        task.wait()
+                    end
+                end)
+            end
+        end)
+
+        FakeCharacter:WaitForChild('Humanoid').Died:Once(function()
+            Con1:Disconnect()
+            UJ:Disconnect()
+            RealChar.Humanoid.Health = 0
+        end)
+
+        RealChar:WaitForChild('Humanoid').Died:Once(function()
+            Con1:Disconnect()
+            FakeCharacter:Destroy()
+        end)
+
+        RealChar.Humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+        workspace.CurrentCamera.CameraType = Enum.CameraType.Track
+        workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+    end)
+
+    -- Get Motor6D from Torso to part
     local function getMotor(partName)
-        local fakeModel = workspace:FindFirstChild(LocalPlayer.Name .. "_Fake")
+        local fakeModel = workspace:FindFirstChild(Player.Name .. "_Fake")
         if not fakeModel then return nil end
-
         local torso = fakeModel:FindFirstChild("Torso")
         local part = fakeModel:FindFirstChild(partName)
         if torso and part then
-            for _, joint in ipairs(torso:GetChildren()) do
-                if joint:IsA("Motor6D") and joint.Part1 == part then
-                    return joint
-                end
-            end
+            return torso:FindFirstChild(partName)
         end
         return nil
     end
 
     return {
-        MoveRotation = function(partName, rotationVector)
+        MoveRotation = function(partName, angle)
             local motor = getMotor(partName)
             if motor then
-                motor.Transform = CFrame.Angles(
-                    math.rad(rotationVector.X),
-                    math.rad(rotationVector.Y),
-                    math.rad(rotationVector.Z)
-                )
+                motor.CurrentAngle = angle
+                Motors[partName] = angle
             end
         end,
 
         MoveCframePart = function(partName, cframe)
             local motor = getMotor(partName)
             if motor then
-                motor.Transform = cframe
+                local rx, ry, rz = cframe:ToOrientation()
+                local angle = rx
+                if partName == "Right Shoulder" or partName == "Right Hip" then
+                    angle = -rx
+                elseif partName == "Left Shoulder" or partName == "Left Hip" then
+                    angle = rx
+                elseif partName == "Neck" then
+                    angle = -ry
+                end
+                motor.CurrentAngle = angle
+                Motors[partName] = angle
             end
         end,
 
         TweenPart = function(partName, targetCFrame, time)
             local motor = getMotor(partName)
             if not motor then return end
-
-            local startCFrame = motor.Transform
+            local startAngle = Motors[partName] or 0
+            local rx, ry, rz = targetCFrame:ToOrientation()
+            local targetAngle = rx
+            if partName == "Right Shoulder" or partName == "Right Hip" then
+                targetAngle = -rx
+            elseif partName == "Left Shoulder" or partName == "Left Hip" then
+                targetAngle = rx
+            elseif partName == "Neck" then
+                targetAngle = -ry
+            end
             local startTime = tick()
-
             local conn
             conn = RunService.RenderStepped:Connect(function()
-                local alpha = math.clamp((tick() - startTime) / time, 0, 1)
-                local newCFrame = startCFrame:Lerp(targetCFrame, alpha)
-                motor.Transform = newCFrame
-
-                if alpha >= 1 then
-                    conn:Disconnect()
-                end
+                local elapsed = tick() - startTime
+                local alpha = math.clamp(elapsed / time, 0, 1)
+                local angle = startAngle + (targetAngle - startAngle) * alpha
+                motor.CurrentAngle = angle
+                Motors[partName] = angle
+                if alpha >= 1 then conn:Disconnect() end
             end)
         end
     }
 end
+
+
 
 
 
