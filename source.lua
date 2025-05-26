@@ -91,6 +91,8 @@ function CreateFeConnection()
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
 
+    local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
+
     local function getMotor(partName)
         local fakeModel = workspace:FindFirstChild(LocalPlayer.Name .. "_Fake")
         if not fakeModel then return nil end
@@ -107,11 +109,15 @@ function CreateFeConnection()
         return nil
     end
 
-    return {
+    local connectionObject = {
         MoveRotation = function(partName, rotation)
             local motor = getMotor(partName)
             if motor then
-                motor.Transform = CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
+                motor.Transform = CFrame.Angles(
+                    math.rad(rotation.X),
+                    math.rad(rotation.Y),
+                    math.rad(rotation.Z)
+                )
             end
         end,
 
@@ -124,24 +130,25 @@ function CreateFeConnection()
 
         TweenPart = function(partName, targetCFrame, time)
             local motor = getMotor(partName)
-            if motor then
-                local startCFrame = motor.Transform
-                local startTime = tick()
+            if not motor then return end
 
-                local conn
-                conn = game:GetService("RunService").RenderStepped:Connect(function()
-                    local elapsed = tick() - startTime
-                    local alpha = math.clamp(elapsed / time, 0, 1)
-                    local newCFrame = startCFrame:Lerp(targetCFrame, alpha)
-                    motor.Transform = newCFrame
+            local startCFrame = motor.Transform
+            local startTime = tick()
 
-                    if alpha >= 1 then
-                        conn:Disconnect()
-                    end
-                end)
-            end
+            local conn
+            conn = game:GetService("RunService").RenderStepped:Connect(function()
+                local alpha = math.clamp((tick() - startTime) / time, 0, 1)
+                local newCFrame = startCFrame:Lerp(targetCFrame, alpha)
+                motor.Transform = newCFrame
+
+                if alpha >= 1 then
+                    conn:Disconnect()
+                end
+            end)
         end
     }
+
+    return connectionObject
 end
 
 
