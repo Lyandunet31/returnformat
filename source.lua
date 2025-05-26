@@ -85,17 +85,38 @@ function TeleportNetworkOwnerPart(part, position)
 		warn("Set Network owner")
 	end
 end
+
 function CreateFeConnection()
+    local TweenService = game:GetService("TweenService")
     local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
+    
     return {
-        MovePart = function(partName, rotation)
+        MoveRotation = function(partName, rotation)
             local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
             if fakeModel and fakeModel:FindFirstChild(partName) then
                 fakeModel[partName].Rotation = rotation
             end
+        end,
+
+        MoveCframePart = function(partName, cframe)
+            local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
+            if fakeModel and fakeModel:FindFirstChild(partName) then
+                fakeModel[partName].CFrame = cframe
+            end
+        end,
+
+        TweenPart = function(partName, cframe, time)
+            local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
+            if fakeModel and fakeModel:FindFirstChild(partName) then
+                local part = fakeModel[partName]
+                local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
+                local tween = TweenService:Create(part, tweenInfo, {CFrame = cframe})
+                tween:Play()
+            end
         end
     }
 end
+
 
 
 getgenv().returntable = returntable
