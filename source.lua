@@ -88,35 +88,61 @@ end
 
 function CreateFeConnection()
     local TweenService = game:GetService("TweenService")
-    local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
-    
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+
+    local function getMotor(partName)
+        local fakeModel = workspace:FindFirstChild(LocalPlayer.Name .. "_Fake")
+        if not fakeModel then return nil end
+
+        local torso = fakeModel:FindFirstChild("Torso")
+        local part = fakeModel:FindFirstChild(partName)
+        if torso and part then
+            for _, motor in ipairs(torso:GetChildren()) do
+                if motor:IsA("Motor6D") and motor.Part1 == part then
+                    return motor
+                end
+            end
+        end
+        return nil
+    end
+
     return {
         MoveRotation = function(partName, rotation)
-            local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
-            if fakeModel and fakeModel:FindFirstChild(partName) then
-                fakeModel[partName].Rotation = rotation
+            local motor = getMotor(partName)
+            if motor then
+                motor.Transform = CFrame.Angles(math.rad(rotation.X), math.rad(rotation.Y), math.rad(rotation.Z))
             end
         end,
 
         MoveCframePart = function(partName, cframe)
-            local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
-            if fakeModel and fakeModel:FindFirstChild(partName) then
-                fakeModel[partName].CFrame = cframe
+            local motor = getMotor(partName)
+            if motor then
+                motor.Transform = cframe
             end
         end,
 
-        TweenPart = function(partName, cframe, time)
-            local fakeModel = workspace:FindFirstChild(game.Players.LocalPlayer.Name .. "_Fake")
-            if fakeModel and fakeModel:FindFirstChild(partName) then
-                local part = fakeModel[partName]
-                local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-                local tween = TweenService:Create(part, tweenInfo, {CFrame = cframe})
-                tween:Play()
+        TweenPart = function(partName, targetCFrame, time)
+            local motor = getMotor(partName)
+            if motor then
+                local startCFrame = motor.Transform
+                local startTime = tick()
+
+                local conn
+                conn = game:GetService("RunService").RenderStepped:Connect(function()
+                    local elapsed = tick() - startTime
+                    local alpha = math.clamp(elapsed / time, 0, 1)
+                    local newCFrame = startCFrame:Lerp(targetCFrame, alpha)
+                    motor.Transform = newCFrame
+
+                    if alpha >= 1 then
+                        conn:Disconnect()
+                    end
+                end)
             end
         end
     }
 end
-
 
 
 getgenv().returntable = returntable
