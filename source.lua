@@ -87,8 +87,9 @@ function TeleportNetworkOwnerPart(part, position)
 end
 
 function CreateFeConnection()
-    local TweenService = game:GetService("TweenService")
+    local RunService = game:GetService("RunService")
     local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
     local LocalPlayer = Players.LocalPlayer
 
     local connection = loadstring(game:HttpGet("https://raw.githubusercontent.com/Lyandunet31/returnformat/refs/heads/main/depencies/createfeconnection.lua", true))()
@@ -100,23 +101,23 @@ function CreateFeConnection()
         local torso = fakeModel:FindFirstChild("Torso")
         local part = fakeModel:FindFirstChild(partName)
         if torso and part then
-            for _, motor in ipairs(torso:GetChildren()) do
-                if motor:IsA("Motor6D") and motor.Part1 == part then
-                    return motor
+            for _, joint in ipairs(torso:GetChildren()) do
+                if joint:IsA("Motor6D") and joint.Part1 == part then
+                    return joint
                 end
             end
         end
         return nil
     end
 
-    local connectionObject = {
-        MoveRotation = function(partName, rotation)
+    return {
+        MoveRotation = function(partName, rotationVector)
             local motor = getMotor(partName)
             if motor then
                 motor.Transform = CFrame.Angles(
-                    math.rad(rotation.X),
-                    math.rad(rotation.Y),
-                    math.rad(rotation.Z)
+                    math.rad(rotationVector.X),
+                    math.rad(rotationVector.Y),
+                    math.rad(rotationVector.Z)
                 )
             end
         end,
@@ -136,7 +137,7 @@ function CreateFeConnection()
             local startTime = tick()
 
             local conn
-            conn = game:GetService("RunService").RenderStepped:Connect(function()
+            conn = RunService.RenderStepped:Connect(function()
                 local alpha = math.clamp((tick() - startTime) / time, 0, 1)
                 local newCFrame = startCFrame:Lerp(targetCFrame, alpha)
                 motor.Transform = newCFrame
@@ -147,9 +148,9 @@ function CreateFeConnection()
             end)
         end
     }
-
-    return connectionObject
 end
+
+
 
 
 getgenv().returntable = returntable
